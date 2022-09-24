@@ -556,7 +556,9 @@ public:
         WindowMan.remove_registered_data("controllist");
 
         status = "window creation finished";
-        WindowMan.wait_for_splash();
+        cout << "into window splashing \n";
+        if(WindowMan.is_splashing())WindowMan.wait_for_splash();
+        cout << "out of window splashing\n";
         wind->show();
         wind2->show();
     }

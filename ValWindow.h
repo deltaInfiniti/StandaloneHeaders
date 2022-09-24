@@ -14,6 +14,7 @@
 #define VW_splash_doblurout true  
 
 #include<string>
+#include<WinUser.h>
 using namespace std;
 
 
@@ -123,6 +124,7 @@ void build_valwindow_create_struct(valwindow_create_struct* ret, string n, int x
 }
 
 #define VW_MOUSECAP_CLICK 1
+#define VW_MOUSECAP_RCLICK 4
 #define VW_MOUSECAP_LDOWN 2
 #define VW_MOUSECAP_MOVE 3
 struct mouse_capture_struct {
@@ -1027,8 +1029,9 @@ void ValWindow::Pcreate_window(int xx, int yy, int ww, int hh, BYTE type,bool sh
 		SetWindowLong(hWnd, GWL_STYLE, 0);
 		SetWindowPos(hWnd,0, xx, yy, ww, hh, SWP_FRAMECHANGED);
 	}
-	else {
-		SetClassLong(hWnd, GCL_HICON, (LONG)LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(101)));
+	else { 
+
+		SetClassLong(hWnd, -14/*GCL_HICON*/, (LONG)LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(101)));
 	}
 	if(show || type == VW_splash)ShowWindow(hWnd, SW_SHOW);
 
@@ -1184,6 +1187,8 @@ void ValWindow_render_thread(void* a) {
 			else
 				wind->needs_control_index = wind->reserved_add_control_ex(&(wind->ValControl_strct));
 			wind->needs_control = false;
+			Sleep(1);
+			continue;
 		}
 
 		Sleep(22);
@@ -1193,6 +1198,7 @@ void ValWindow_render_thread(void* a) {
 
 // global variables for mouse events. if they ever invent multiple pointers this will have to be classified.
 POINT ptclick;
+POINT ptrclick; // new in 2022
 POINT ptmousemove;
 POINT ptmousedown;
 //BYTE mousemove_ind; 
@@ -1204,11 +1210,23 @@ HWND pthwnd=NULL;
 HWND hwnd_mouseover_clear = NULL;
 #define VW_EVENT_THREAD_SLEEP 20
 
+
 void ValWindow_event_thread(void* a) {  // handles mouse events for a valwindow
 	ValWindow* wind = (ValWindow*)a;
 	short hold;
 	int lastmouse_ind = 0;
+
 	while (1) {
+		if (ptrclick.x != 0 && pthwnd == wind->myhwnd) {
+			if (wind->IS_MOUSE_CAPTURED) {
+				wind->mouse_cap->x = ptrclick.x;
+				wind->mouse_cap->y = ptrclick.y;
+				wind->mouse_cap->type = VW_MOUSECAP_RCLICK;
+				((void(__cdecl*)(void*))(wind->capture_callback))((void*)wind); // call the call_back assigned when capture_mouse is called
+				//_beginthread((_beginthread_proc_type)wind->capture_callback, 0, (void*)wind);
+			}
+			ptrclick = { 0,0 };
+		}
 		if (ptclick.x != 0 && pthwnd == wind->myhwnd) {
 			//wind->events->throw_event_inline(ptclick.x, ptclick.y);
 			if (wind->IS_MOUSE_CAPTURED) {
@@ -1363,6 +1381,7 @@ void VWM_handle_create_window_msg(valwindow_create_struct*);
 LRESULT CALLBACK ValWindowWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     //return 0;
 	ValControl* ctr;
+	ValWindow* Vw;
 	switch (msg) {
     //case WM_KEYDOWN:
 	case VW_CREATE_WINDOW:
@@ -1423,12 +1442,39 @@ LRESULT CALLBACK ValWindowWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lPa
 	case WM_LBUTTONUP:
         // add xy to event handler list. 
         //cout<<"window found click" << lParam << ":" << GET_X_LPARAM(lParam) << ":" << GET_Y_LPARAM(lParam) << "    \r";
+		//if (G_ismousedown == false)return 0;
+		//ptclick = { GET_X_LPARAM(lParam),GET_Y_LPARAM(lParam) };
+		//G_ismousedown = false;
+		//pthwnd = hWnd;
+  //      return 0;
+  //      break;
+#ifdef VAL_MINESWEEPER_FAST_MOUSE
+		Vw = VW_from_hwnd(hWnd);
+		if (Vw->IS_MOUSE_CAPTURED) {
+			Vw->mouse_cap->x = GET_X_LPARAM(lParam);
+			Vw->mouse_cap->y = GET_Y_LPARAM(lParam);
+			Vw->mouse_cap->type = VW_MOUSECAP_CLICK;
+			((void(__cdecl*)(void*))(Vw->capture_callback))((void*)Vw);
+		}
+#else
 		if (G_ismousedown == false)return 0;
 		ptclick = { GET_X_LPARAM(lParam),GET_Y_LPARAM(lParam) };
 		G_ismousedown = false;
 		pthwnd = hWnd;
-        return 0;
-        break;
+#endif
+		break;
+
+	case WM_RBUTTONUP:
+		// add xy to event handler list. 
+		//cout<<"window found click" << lParam << ":" << GET_X_LPARAM(lParam) << ":" << GET_Y_LPARAM(lParam) << "    \r";
+		//if (G_ismousedown == false)return 0;
+		ptrclick = { GET_X_LPARAM(lParam),GET_Y_LPARAM(lParam) };
+		//G_ismousedown = false;
+		pthwnd = hWnd;
+		return 0;
+		break;
+
+
 	case WM_MOUSEMOVE:
 		if (GLOBAL_WINDOW_MOUSEPOS_TIMER.read_ms_nolap() > 1) {
 			//cout << "window mouse move" << lParam << ":" << GET_X_LPARAM(lParam) << ":" << GET_Y_LPARAM(lParam) << "    \r";

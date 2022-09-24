@@ -555,7 +555,7 @@ void ValControl::drawtogfx() {  // this version may be redraw. remove edit and o
 			textformat->y = 0;
 			textformat->x = 0;
 			value[8] = (value[0] + LISTDATA_OFFSET);
-			if (LISTDATA_OFFSET != 0) value[8] %= listlen;
+			if (LISTDATA_OFFSET != 0&& listlen!=0) value[8] %= listlen;
 
 			textformat->content = ctostr(LISTDATA_OFFSET) + ":" + ctostr(listlen) + ":" + ctostr(value[8]);
 			value[1] = indexes * listbox_cellheight + LISTBOX_ARROWHEIGHT;

@@ -24,6 +24,8 @@ public:
 	ValTextControl& DIBdraw(HDC comdc,HBITMAP& target);
 	int getrealtwidth();
 	bool IS_TRANSP;
+	bool IS_BKR = false;
+	COLORREF BK_Color = 12632256;
 	HFONT get_HFONT() {
 		if (myfont == NULL)myfont = CreateFontIndirectA(&fontdat);
 		return myfont;
@@ -53,6 +55,7 @@ ValTextControl& ValTextControl::DIBdraw(HDC comdc,HBITMAP& target) {
 	//	RECTb(a, x, y, x+w,y+h);
 		//BeginPath(bufhdc);
 	if (IS_TRANSP) SetBkMode(bufhdc, TRANSPARENT);
+	else if (IS_BKR) SetBkColor(bufhdc,BK_Color);
 	DrawTextA(bufhdc, content.c_str(), content.length(), &a, DT_NOCLIP|DT_SINGLELINE|DT_INTERNAL);
 	a = { 0,0,0,0 };
 	DrawTextA(bufhdc, content.c_str(), content.length(), &a, DT_CALCRECT);

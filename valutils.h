@@ -136,12 +136,17 @@ string ctostr(unsigned int i) {
 string ctostr(double a) {
     char buff[25];
     sprintf(buff, "%14.14f", a);
-    return string(buff);
+    string ret = string(buff);
+    while (ret[ret.length()-1] == '0' || ret[ret.length()-1] == '.')ret = ret.substr(0, ret.length() - 1);
+    if (ret.length() == 0)return "0";
+    return ret;
 }
+
 string ctostr(bool a) {
     if (a)return "true";
     return "false";
 }
+
 string creftostr(COLORREF a) {
     string ret = ctostr((unsigned int)GetRValue(a));
     ret += ",";
@@ -295,7 +300,7 @@ int readint(string q){
 }
 /***************time functions**********************************/
 static bool G_END_PAUSE__ = false;
-void pause() {
+void pause_console() {
     cout << "press enter to continue";
     char wait;
     while (!G_END_PAUSE__) {

@@ -306,7 +306,7 @@ void test_stringcomp() {
 
 void speedtest_stringcomp() {
 	string* tests= new string[G_speedtest_size];
-	foreach(x, G_speedtest_size)tests[x] = randstr(8+(rand()%8));
+	for (int x = 0; x < G_speedtest_size; x++)tests[x] = randstr(8 + (rand() % 8));
 	int ret = 0;
 	unsigned long long int mret = 0;
 	
