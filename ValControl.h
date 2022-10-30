@@ -331,7 +331,7 @@ public:
 				ret += ",textfont=";
 				ret += textformat->fontdat.lfFaceName;
 			}
-			
+			if (textformat->fontdat.lfHeight != VTC_DEFAULT_TEXT_HEIGHT) ret += ",textfontsize=" + ctostr(textformat->fontdat.lfHeight);
 			if (IS_TRANSP != VC_ISTRANSP_DEFAULT)ret += (IS_TRANSP ? ",transparent=true" : ",transparent=false");
 			if (NO_draw != VC_NODRAW_DEFAULT) ret += ",nodraw=" + ctostr(NO_draw);// ? "true" : "false");
 			if (NO_interact != VC_NOINTERACT_DEFAULT)ret += ",nointeract=" + ctostr(NO_interact);
@@ -484,7 +484,7 @@ void ValControl::drawtogfx() {  // this version may be redraw. remove edit and o
 		//textformat->x = 20;
 		textformat->content = label;
 		textformat->x = (width / 2) - (textformat->getrealtwidth() / 2);
-		textformat->y = (height / 2) - 10;
+		textformat->y = (height / 2) - (textformat->getrealtheight() / 2);//10;
 		break;
 	case VC_CHECKBOX:
 		mygfx->draw_boarder();
@@ -909,4 +909,24 @@ void ValControl::RESERVED_resize(int ww, int hh) {
 	height = hh;
 	drawtogfx();
 	needs_redraw = true;
+}
+
+void listbox_selectstring(ValControl* lb, string whatstr) {
+	stringlist* data = lb->listdata;
+	int index = -1;
+	foreach(i, data->length()) {
+		if (data->index(i) == whatstr) {
+			index = i; break;
+		}
+	}
+	if (index != -1) {
+		lb->LISTDATA_OFFSET = index;
+		lb->value[0] = 0;
+		lb->drawtogfx();
+		lb->needs_redraw = true;
+	}
+	else {
+		cout << "could not find *" << whatstr << "* in listbox list\n";
+	}
+
 }

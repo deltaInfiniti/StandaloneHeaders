@@ -121,6 +121,12 @@ string ctostr(int i) {
     return a;
 
 }
+string ctostr(unsigned long int i) {
+    char a[90];
+    _ltoa_s(i, a, 10);
+    return a;
+
+}
 string ctostr(LONG i) { return ctostr((int)i); }
 string ctostr(unsigned int i) {
     char a[38];

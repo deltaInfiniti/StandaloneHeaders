@@ -193,20 +193,20 @@ void ValScreen::buf_drawrect(int tx, int ty, int tw, int th){
 	buf_drawline(tx+tw,ty,th,0,3);	
 		
 }
-int circle_getyfromXR(double x, int r, bool &f){
-	double xx = x*x;
-	double rr = r*r;
-	xx=rr-xx;
-	
-	if(xx<0){
-	  f=false;
-	  return -1;
-	}
-	f=true;
-	if(xx==0)return 0;
-	//if(xx<2)return 1;
-	return sqrt(xx);
-}
+int circle_getyfromXR(double x, int r, bool& f);
+//	double xx = x*x;
+//	double rr = r*r;
+//	xx=rr-xx;
+//	
+//	if(xx<0){
+//	  f=false;
+//	  return -1;
+//	}
+//	f=true;
+//	if(xx==0)return 0;
+//	//if(xx<2)return 1;
+//	return sqrt(xx);
+//}
 int get_y_from_parabola(int a, int b, int c, int d,int x, int yzero, int ytop,bool invert=true){
 		
 		int y=0,ym=0,ly=0,ytoph=0;

@@ -17,7 +17,7 @@
 #include<WinUser.h>
 using namespace std;
 
-
+bool VS_AUTOSHOW_NEWWINDOW = true;
 LRESULT CALLBACK ValWindowWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 LRESULT CALLBACK ValWindowPasswordControlWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 void VW_slpashscreen_msgloop_kill(void* a);
@@ -314,7 +314,6 @@ public:
 	int AddControl_offsety = 0;
 	void set_ACoffsetx(int x) { AddControl_offsetx = x; }
 	void set_ACoffsety(int y) { AddControl_offsety = y; }
-
 	ValControl* AddControl(varlist& controldata,bool load_extended=true) {
 		int type = VC_str_toTYPE(controldata.valueof("type"));
 		string title = controldata.valueof("title");
@@ -426,6 +425,11 @@ public:
 			if (load_extended) {
 				glambdai("numblurs", ret->numblurs);
 				if (controldata.isset("textfont"))ret->SetFont(controldata.valueof("textfont"));
+				if (controldata.isset("textfontsize")) {
+					ret->textformat->fontdat.lfHeight = ctoint(controldata.valueof("textfontsize"));
+					ret->textformat->myfont = CreateFontIndirectA(&(ret->textformat->fontdat));
+					cout << "caught textfontsize and set to " << ret->textformat->fontdat.lfHeight;
+				}
 				if (controldata.isset("transparent"))ret->IS_TRANSP = (controldata.valueof("transparent") == "true" ? true : false);
 				if (controldata.isset("nodraw"))ret->NO_draw = (controldata.valueof("nodraw") == "true" ? true : false);
 				if (controldata.isset("nointeract"))ret->NO_interact = (controldata.valueof("nointeract") == "true" ? true : false);;
@@ -488,8 +492,9 @@ public:
 
 	}
 	void set_editctrl_text(string name, string text) {
-
-		SetWindowTextA(controls[find_control(name)]->windows_control, text.c_str());
+		int i = find_control(name);
+		if (i ==-1 ) return;
+		SetWindowTextA(controls[i]->windows_control, text.c_str());
 	}
 	void press_button_byname(string name) {
 		short ind = find_control(name);
@@ -745,7 +750,7 @@ public:
 		}
 
 	}
-
+#undef RECT
 	string export_markup() {
 		LPRECT lr= new RECT;
 		GetWindowRect(myhwnd, lr);
@@ -1033,7 +1038,7 @@ void ValWindow::Pcreate_window(int xx, int yy, int ww, int hh, BYTE type,bool sh
 
 		SetClassLong(hWnd, -14/*GCL_HICON*/, (LONG)LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(101)));
 	}
-	if(show || type == VW_splash)ShowWindow(hWnd, SW_SHOW);
+	if(type == VW_splash || (VS_AUTOSHOW_NEWWINDOW && show))ShowWindow(hWnd, SW_SHOW);
 
 	//SetWindowPos(hWnd, HWND_TOPMOST, xx, yy, ww, hh, SWP_SHOWWINDOW);
 
@@ -1123,6 +1128,7 @@ void VW_splashscreenthread(void* a) {
 	
 	//cout << "in splashscreenthread past metrics" << endl;;
 	ValWindow splashsc(info->str, info->x, info->y, info->w, info->h, VW_splash);
+	splashsc.show();
 	splashsc.set_topmost(1);
 	//splashsc.add_control_ex(VC_LOADINGBAR, "loading", "1", VRECT{ 50,50,200,30 }, VC_NOFUNC, false);
 	//still not entirely sure why ^^ doesn't work. causes butterfly errors all over the place. vv works...
@@ -1187,11 +1193,11 @@ void ValWindow_render_thread(void* a) {
 			else
 				wind->needs_control_index = wind->reserved_add_control_ex(&(wind->ValControl_strct));
 			wind->needs_control = false;
-			Sleep(1);
+			Sleep(3);
 			continue;
 		}
 
-		Sleep(22);
+		Sleep(7);
 	}
 
 }
@@ -1313,6 +1319,13 @@ LRESULT CALLBACK ValWindoweditControlWndProc(HWND hWnd, UINT msg, WPARAM wParam,
 					SetFocus(hold);
 				}
 				else {
+					if (vwp->controls[controlId]->tabname != "") {
+						ValControl* vch = vwp->controls[ vwp->find_control(vwp->controls[controlId]->tabname) ];
+						if (vch != NULL && vch->windows_control!=NULL) {
+							vwp->controls[controlId]->tabhwnd = vch->windows_control;
+							SetFocus(vch->windows_control);
+						}
+					}
 					if (hold == NULL)cout << "hold is null" << endl;
 
 					if (controlId == -1)cout << "controlId==-1" << endl;

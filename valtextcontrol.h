@@ -2,6 +2,7 @@
 #include<string>
 #include<windows.h>
 using namespace std;
+#define VTC_DEFAULT_TEXT_HEIGHT 16
 class ValTextControl {
 public:
 	LOGFONTA fontdat;
@@ -30,6 +31,8 @@ public:
 		if (myfont == NULL)myfont = CreateFontIndirectA(&fontdat);
 		return myfont;
 	}
+	int getrealtheight();
+	int getrealtdims(long& ww, long& hh);
 };
 int ValTextControl::getrealtwidth() {
 	bufhdc = CreateCompatibleDC(NULL);
@@ -45,6 +48,37 @@ int ValTextControl::getrealtwidth() {
 	DeleteDC(bufhdc);
 	return a.right;
 }
+int ValTextControl::getrealtheight() {
+	bufhdc = CreateCompatibleDC(NULL);
+	//HFONT fnt = CreateFontIndirectA(&fontdat);
+	if (myfont == NULL)myfont = CreateFontIndirectA(&fontdat);
+
+	SelectObject(bufhdc, myfont);
+	RECT a = { 0,0,0,0 };
+	DrawTextA(bufhdc, content.c_str(), content.length(), &a, DT_CALCRECT);
+	SelectObject(bufhdc, fontselectdump);
+	//DeleteObject(fnt);
+	ReleaseDC(NULL, bufhdc);
+	DeleteDC(bufhdc);
+	return a.bottom;
+}
+int ValTextControl::getrealtdims(long &ww, long& hh) {
+	bufhdc = CreateCompatibleDC(NULL);
+	//HFONT fnt = CreateFontIndirectA(&fontdat);
+	if (myfont == NULL)myfont = CreateFontIndirectA(&fontdat);
+
+	SelectObject(bufhdc, myfont);
+	RECT a = { 0,0,0,0 };
+	DrawTextA(bufhdc, content.c_str(), content.length(), &a, DT_CALCRECT);
+	SelectObject(bufhdc, fontselectdump);
+	//DeleteObject(fnt);
+	ReleaseDC(NULL, bufhdc);
+	DeleteDC(bufhdc);
+	hh = a.bottom;;
+	ww = a.right;;
+	return 0;
+}
+
 ValTextControl& ValTextControl::DIBdraw(HDC comdc,HBITMAP& target) {
 	bufhdc = CreateCompatibleDC(comdc);
 	if(myfont==NULL)myfont = CreateFontIndirectA(&fontdat);
@@ -100,7 +134,7 @@ ValTextControl& ValTextControl::SetFont(string fontnamez) {
 		myfont = NULL;
 	}
 
-	fontdat.lfHeight = 16;
+	fontdat.lfHeight = VTC_DEFAULT_TEXT_HEIGHT;
 	fontdat.lfWidth = 0;
 	fontdat.lfEscapement = 0;
 	fontdat.lfOrientation =0;
